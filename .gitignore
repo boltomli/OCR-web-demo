@@ -1,0 +1,4 @@
+*.bin
+*.dat
+.vscode/
+__pycache__/
