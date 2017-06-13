@@ -8,7 +8,7 @@ from PIL import ImageFilter
 def process_image(url):
     '''OCR image to text'''
     image = _get_image(url)
-    #image.filter(ImageFilter.SHARPEN)
+    image.filter(ImageFilter.SHARPEN)
     return pytesseract.image_to_string(image)
 
 
