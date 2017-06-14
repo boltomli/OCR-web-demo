@@ -8,6 +8,7 @@ from flask import Flask
 from flask_restplus import Api, Resource
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flaskext.couchdb import CouchDBManager, Document, TextField, DateTimeField, ViewField
+from werkzeug.utils import secure_filename
 import parsers
 import ocr
 
@@ -72,7 +73,13 @@ class Recognize(Resource):
     def post(self):
         '''Recognize text from image'''
         args = parsers.IMAGE_URL.parse_args()
-        return {'ocr': ocr.process_image(args['url'])}
+        title = args['url']
+        caption = ocr.process_image(args['url'])
+        filename = secure_filename(title)
+        attempt = Attempt(title=title, caption=caption, filename=filename)
+        attempt.id = unique_id()
+        attempt.store()
+        return {filename: caption}
 
 if __name__ == '__main__':
     APP.run(host='0.0.0.0')
