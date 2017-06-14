@@ -2,3 +2,4 @@
 *.dat
 .vscode/
 __pycache__/
+static/
