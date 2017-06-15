@@ -65,7 +65,7 @@ class UploadAndRecognize(Resource):
         attempt = model.Attempt()
         attempt.url = url
         attempt.caption = ocr.process_file(UPLOADED_ATTEMPTS.path(filename))
-        attempt.filename = secure_filename(url)
+        attempt.filename = filename
         action.GRAPH.push(attempt)
         return action.get_attempt_by_url(url)
 
