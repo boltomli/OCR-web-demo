@@ -1,6 +1,8 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 # -*- coding: utf-8 -*-
+
+'''This is the server module for the app'''
 
 import os
 from flask import Flask, send_file
@@ -10,7 +12,7 @@ from werkzeug.utils import secure_filename
 import magic
 import parsers
 import ocr
-from store import model, action
+from store import action
 
 # Settings
 DEBUG = False
@@ -35,7 +37,7 @@ patch_request_class(APP, 32 * 1024 * 1024) # 32M file upload limit
 @NS.route('/')
 class ListAttempts(Resource):
     def get(self):
-        """Returns list of attempts."""
+        '''Returns list of attempts'''
         attempts = action.get_attempts()
         return attempts
 
@@ -46,12 +48,9 @@ class RetrieveAndRecognize(Resource):
         '''Recognize text from image URL'''
         args = parsers.IMAGE_URL.parse_args()
         url = args['url']
-        attempt = model.Attempt()
-        attempt.url = url
-        attempt.caption = ocr.process_url(url)
-        attempt.filename = secure_filename(url)
-        action.GRAPH.push(attempt)
-        return action.get_attempt_by_url(url)
+        filename = secure_filename(url)
+        action.save_attempt(url, filename, ocr.process_url(url, UPLOADED_ATTEMPTS.path(filename)))
+        return action.get_attempt_by_pk(filename)
 
 @NS.route('/upload/')
 class UploadAndRecognize(Resource):
@@ -62,12 +61,8 @@ class UploadAndRecognize(Resource):
         uploaded_file = args['file']
         filename = UPLOADED_ATTEMPTS.save(uploaded_file)
         url = UPLOADED_ATTEMPTS.url(filename)
-        attempt = model.Attempt()
-        attempt.url = url
-        attempt.caption = ocr.process_file(UPLOADED_ATTEMPTS.path(filename))
-        attempt.filename = filename
-        action.GRAPH.push(attempt)
-        return action.get_attempt_by_url(url)
+        action.save_attempt(url, filename, ocr.process_file(UPLOADED_ATTEMPTS.path(filename)))
+        return action.get_attempt_by_pk(filename)
 
 @NS.route('/view/<string:filename>')
 class ViewFile(Resource):

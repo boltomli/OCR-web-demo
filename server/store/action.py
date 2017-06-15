@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+
+# -*- coding: utf-8 -*-
+
+'''This module provides database actions'''
+
 import os
 from py2neo import Graph
 from . import model
@@ -12,6 +18,14 @@ def get_attempts():
     '''Get a list of all OCR attempts.'''
     return GRAPH.data("MATCH (attempt:Attempt) RETURN attempt")
 
-def get_attempt_by_url(url):
-    '''Get one OCR attempt by URL.'''
-    return model.Attempt.select(GRAPH, url).first().__ogm__.node
+def get_attempt_by_pk(pk):
+    '''Get one OCR attempt by filename.'''
+    return model.Attempt.select(GRAPH, pk).first().__ogm__.node
+
+def save_attempt(url, filename, caption):
+    '''Save an attempt'''
+    attempt = model.Attempt()
+    attempt.url = url
+    attempt.filename = filename
+    attempt.caption = caption
+    GRAPH.push(attempt)
