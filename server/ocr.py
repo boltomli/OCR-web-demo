@@ -11,17 +11,22 @@ from wand.image import Image
 from PIL import Image as PI
 from PIL import ImageFilter as IF
 
-def process_url(url, filename):
-    '''OCR image to text'''
-    image = Image(blob=BytesIO(requests.get(url).content))
-    image.save(filename=filename)
-    return process_image(image)
+def process_url(url, filename, lang):
+    '''OCR from URL'''
+    with open(filename, 'wb') as f:
+        f.write(requests.get(url).content)
+    return process_file(filename, lang)
 
-def process_file(filename):
-    '''OCR image to text'''
-    image = Image(filename=filename)
-    return process_image(image)
+def process_file(filename, lang):
+    '''OCR from file'''
+    caption = []
+    image = Image(filename=filename, resolution=150)
+    image_jpeg = image.convert('jpeg')
+    for image in image_jpeg.sequence:
+        image_page = Image(image=image)
+        caption.append(process_image(image_page, lang))
+    return ''.join(caption)
 
-def process_image(image):
-    '''Convert image to sharpened JPEG and OCR'''
-    return OCR.image_to_string(PI.open(BytesIO(image.make_blob('jpeg'))).filter(IF.SHARPEN))
+def process_image(image, lang='eng'):
+    '''Sharpen image and OCR'''
+    return OCR.image_to_string(PI.open(BytesIO(image.make_blob('jpeg'))).filter(IF.SHARPEN), lang)

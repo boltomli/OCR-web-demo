@@ -7,7 +7,7 @@
 import os
 from flask import Flask, send_file
 from flask_restplus import Api, Resource
-from flask_uploads import UploadSet, configure_uploads, IMAGES, patch_request_class
+from flask_uploads import UploadSet, configure_uploads, patch_request_class, AllExcept, SCRIPTS, EXECUTABLES
 from werkzeug.utils import secure_filename
 import magic
 import parsers
@@ -29,9 +29,9 @@ NS = API.namespace('ocr')
 
 # Uploads
 
-UPLOADED_ATTEMPTS = UploadSet('attempts', IMAGES)
+UPLOADED_ATTEMPTS = UploadSet('attempts', AllExcept(SCRIPTS + EXECUTABLES))
 configure_uploads(APP, UPLOADED_ATTEMPTS)
-patch_request_class(APP, 32 * 1024 * 1024) # 32M file upload limit
+patch_request_class(APP, 64 * 1024 * 1024) # 64M file upload limit
 
 # APIs
 @NS.route('/')
@@ -48,8 +48,9 @@ class RetrieveAndRecognize(Resource):
         '''Recognize text from image URL'''
         args = parsers.IMAGE_URL.parse_args()
         url = args['url']
+        lang = args['lang']
         filename = secure_filename(url)
-        action.save_attempt(url, filename, ocr.process_url(url, UPLOADED_ATTEMPTS.path(filename)))
+        action.save_attempt(url, filename, ocr.process_url(url, UPLOADED_ATTEMPTS.path(filename), lang))
         return action.get_attempt_by_pk(filename)
 
 @NS.route('/upload/')
@@ -59,9 +60,10 @@ class UploadAndRecognize(Resource):
         '''Recognize text from uploaded image'''
         args = parsers.UPLOAD_FILE.parse_args()
         uploaded_file = args['file']
+        lang = args['lang']
         filename = UPLOADED_ATTEMPTS.save(uploaded_file)
         url = UPLOADED_ATTEMPTS.url(filename)
-        action.save_attempt(url, filename, ocr.process_file(UPLOADED_ATTEMPTS.path(filename)))
+        action.save_attempt(url, filename, ocr.process_file(UPLOADED_ATTEMPTS.path(filename), lang))
         return action.get_attempt_by_pk(filename)
 
 @NS.route('/view/<string:filename>')
