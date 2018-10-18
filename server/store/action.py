@@ -16,11 +16,11 @@ GRAPH = Graph(url=URL, user=U, password=P)
 
 def get_attempts():
     '''Get a list of all OCR attempts.'''
-    return GRAPH.data("MATCH (attempt:Attempt) RETURN attempt")
+    return list(GRAPH.nodes.match('Attempt'))
 
 def get_attempt_by_pk(pk):
     '''Get one OCR attempt by filename.'''
-    return model.Attempt.select(GRAPH, pk).first().__ogm__.node
+    return GRAPH.nodes.match('Attempt', filename=pk).first()
 
 def save_attempt(url, filename, caption):
     '''Save an attempt'''
